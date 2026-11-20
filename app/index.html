@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>NEON COAST — Vice Cover Studio</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<header class="topbar">
+  <div class="brand">
+    <span class="brand-mark">NC</span>
+    <div class="brand-text">
+      <strong>NEON COAST</strong>
+      <span>Vice Cover Studio</span>
+    </div>
+  </div>
+  <div class="caption-fields">
+    <label>Title
+      <input id="titleInput" type="text" value="NEON COAST" maxlength="26" autocomplete="off">
+    </label>
+    <label>Subtitle
+      <input id="subtitleInput" type="text" value="Sunset Heist" maxlength="34" autocomplete="off">
+    </label>
+  </div>
+</header>
+
+<main class="workspace">
+  <section class="stage-wrap">
+    <div class="stage" id="stage">
+      <canvas id="coverCanvas" width="1920" height="1080"></canvas>
+    </div>
+    <p class="hint">Click a panel to select it, then click a library photo to assign it (assigning a photo that is already on the cover swaps the two panels). Drag the selected panel&rsquo;s photo to reposition it, scroll to zoom.</p>
+  </section>
+
+  <aside class="panel">
+    <h2>Photos</h2>
+    <div class="library" id="library"></div>
+    <label class="upload-btn">
+      + Upload your photo
+      <input id="uploadInput" type="file" accept="image/*" hidden>
+    </label>
+
+    <h2>Layout</h2>
+    <div class="picker" id="layoutPicker"></div>
+
+    <h2>Grade</h2>
+    <div class="picker" id="gradePicker"></div>
+
+    <h2>Export size</h2>
+    <select id="sizeSelect"></select>
+
+    <div class="actions">
+      <button id="shuffleBtn" type="button">Shuffle photos</button>
+      <button id="spreadBtn" type="button">Spread one photo</button>
+      <button id="undoBtn" type="button">Undo</button>
+      <button id="redoBtn" type="button">Redo</button>
+      <button id="exportBtn" type="button" class="primary">Export PNG</button>
+      <button id="exportAllBtn" type="button">Export all sizes</button>
+    </div>
+    <p class="fineprint">Every panel always shows a different photo — no repeats on a cover. Works fully offline; your photos never leave this page.</p>
+  </aside>
+</main>
+
+<script src="src/cover.js"></script>
+<script src="src/shots.js"></script>
+<script src="src/main.js"></script>
+</body>
+</html>
