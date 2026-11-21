@@ -4,7 +4,7 @@
 // output directory the harness names (MAKEFUN_OUTPUT_DIR, default /output)
 // and writes dossier.json there with the vendored buildDossier, byte for
 // byte what the scorer recomputes from the same tree.
-import { cpSync, mkdirSync, rmSync, writeFileSync } from 'node:fs';
+import { cpSync, mkdirSync, readdirSync, rmSync, writeFileSync } from 'node:fs';
 import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { buildDossier } from './vendor/makefun-app.ts';
@@ -20,8 +20,13 @@ if (protectedDirs.includes(outputDir)) {
   throw new Error(`refusing to use a source directory as the output directory: ${outputDir}`);
 }
 
-rmSync(outputDir, { recursive: true, force: true });
+// Clear only the CONTENTS of the output directory, never the directory
+// itself: in the grader the output directory is a mount whose parent is
+// read-only, so removing the directory would fail with EACCES.
 mkdirSync(outputDir, { recursive: true });
+for (const entry of readdirSync(outputDir)) {
+  rmSync(join(outputDir, entry), { recursive: true, force: true });
+}
 cpSync(join(repoRoot, 'app'), join(outputDir, 'app'), { recursive: true });
 cpSync(join(repoRoot, 'screenshots'), join(outputDir, 'screenshots'), { recursive: true });
 
@@ -32,4 +37,7 @@ const dossier = buildDossier(outputDir, {
   app_max_bytes: 50331648,
 });
 writeFileSync(join(outputDir, 'dossier.json'), dossier);
+if (Buffer.byteLength(dossier) > 1572864) {
+  throw new Error(`dossier.json is ${Buffer.byteLength(dossier)} bytes, over the 1,572,864-byte cap`);
+}
 console.log(`neon-coast: copied app/ + screenshots/ to ${outputDir} and wrote dossier.json (${dossier.length} bytes)`);
