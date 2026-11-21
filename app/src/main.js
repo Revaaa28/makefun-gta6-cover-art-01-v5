@@ -11,6 +11,7 @@ const CA = window.CoverArt; // cover.js owns the global names; go through the na
 
 const DEFAULT_PHOTOS = {
   heroSpread: ['hero'],
+  posterGrid: ['rooftop', 'hero', 'carfriends', 'pool', 'beachdrive'],
   quadDistinct: ['beachdrive', 'pool', 'pier', 'boulevard'],
   tiltedShots: ['rooftop', 'carfriends', 'marina'],
   mosaic9: ['hero', 'rooftop', 'carfriends', 'pool', 'beachdrive', 'marina', 'boulevard', 'pier'],
@@ -364,6 +365,10 @@ function applyShotScene(name) {
     canvas.height = scene.viewport[1];
     CA.renderCover(canvas, state);
   } else {
+    // Editor screenshot: compact chrome so the whole control panel,
+    // export size select and Export PNG button included, fits the
+    // capture frame.
+    document.body.classList.add('shot-editor');
     syncControlsFromState();
     render();
   }

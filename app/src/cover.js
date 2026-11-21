@@ -194,7 +194,9 @@ function gradedPhotoCanvas(img, gradeId) {
 function drawPhotoIntoPanel(ctx, rect, panel, gradeId) {
   const graded = gradedPhotoCanvas(panel.img, gradeId);
   const iw = graded.width, ih = graded.height;
-  const scale = Math.max(rect.w / iw, rect.h / ih) * (panel.zoom || 1);
+  // A layout may bias a panel's default crop (rect.zoomBias) so its
+  // hero panel starts tighter than a plain cover-fit.
+  const scale = Math.max(rect.w / iw, rect.h / ih) * (panel.zoom || 1) * (rect.zoomBias || 1);
   const dw = iw * scale, dh = ih * scale;
   let dx = rect.x + (rect.w - dw) / 2 + (panel.dx || 0);
   let dy = rect.y + (rect.h - dh) / 2 + (panel.dy || 0);
@@ -424,6 +426,7 @@ const MOSAIC_BAND_RATIO = 0.15;
 
 const LAYOUTS = [
   { id: 'heroSpread', label: 'Hero Spread', photoPanels: 1 },
+  { id: 'posterGrid', label: 'Poster Grid', photoPanels: 5 },
   { id: 'quadDistinct', label: 'Quad — 4 Distinct', photoPanels: 4 },
   { id: 'tiltedShots', label: 'Tilted Snapshots', photoPanels: 3 },
   { id: 'mosaic9', label: 'Mosaic 9', photoPanels: 8 },
@@ -445,6 +448,26 @@ function layoutPanels(layoutId, W, H) {
   switch (layoutId) {
     case 'heroSpread':
       return [{ x: 0, y: 0, w: W, h: H }];
+    case 'posterGrid': {
+      // Asymmetric GTA poster: one tall panel on the left (~40% of the
+      // width), a 2x2 grid on the right, white gutters between them
+      // (the cover background shows through, painted cream for this
+      // layout in renderCover). The gutters run wider than the other
+      // layouts' gaps — the bold white separation IS the poster look.
+      // Draw order: tall, then the grid row by row.
+      const pg = Math.max(6, Math.round(W * 0.016));
+      const leftW = Math.round((W - pg * 3) * 0.4);
+      const rightX = pg * 2 + leftW;
+      const cellW = (W - rightX - pg * 2) / 2;
+      const cellH = (H - pg * 3) / 2;
+      return [
+        { x: pg, y: pg, w: leftW, h: H - pg * 2, zoomBias: 1.08 },
+        { x: rightX, y: pg, w: cellW, h: cellH },
+        { x: rightX + cellW + pg, y: pg, w: cellW, h: cellH },
+        { x: rightX, y: pg * 2 + cellH, w: cellW, h: cellH },
+        { x: rightX + cellW + pg, y: pg * 2 + cellH, w: cellW, h: cellH },
+      ];
+    }
     case 'quadDistinct': {
       const top = H * TITLE_BLOCK_RATIO.quadDistinct;
       const cw = (W - g * 3) / 2, ch = (H - top - g * 3) / 2;
@@ -526,6 +549,17 @@ function drawCoverTitle(ctx, W, H, state) {
       stampRoundBadge(ctx, W - badgeR - W * 0.028, H - badgeR - H * 0.045, badgeR);
       break;
     }
+    case 'posterGrid': {
+      // Title block rides over the top of the panel grid, GTA-poster
+      // style: scrim, gradient title, neon subtitle, heat stars, badge
+      // in the bottom-right corner panel.
+      paintScrim(ctx, 0, 0, W, H * 0.4, true);
+      drawSunsetTitle(ctx, state.title, W / 2, H * 0.098, H * 0.135);
+      drawNeonSubtitle(ctx, state.subtitle, W / 2, H * 0.19, H * 0.048);
+      drawHeatStarMeter(ctx, W / 2, H * 0.245, H * 0.015);
+      stampRoundBadge(ctx, W - badgeR - W * 0.025, H - badgeR - H * 0.04, badgeR);
+      break;
+    }
     case 'quadDistinct':
     case 'classicBlock': {
       const blockH = H * TITLE_BLOCK_RATIO[state.layout];
@@ -583,7 +617,9 @@ function drawCoverTitle(ctx, W, H, state) {
 function renderCover(canvas, state) {
   const W = canvas.width, H = canvas.height;
   const ctx = canvas.getContext('2d');
-  ctx.fillStyle = '#0c0614';
+  // The poster grid's gutters are the background showing between the
+  // panels, so that layout paints its ground cream-white, not dark.
+  ctx.fillStyle = state.layout === 'posterGrid' ? '#f7f2e7' : '#0c0614';
   ctx.fillRect(0, 0, W, H);
   if (state.layout === 'tiltedShots') {
     const glow = ctx.createRadialGradient(W / 2, H * 0.45, 10, W / 2, H * 0.45, Math.max(W, H) * 0.7);
